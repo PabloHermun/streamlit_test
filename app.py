@@ -1,6 +1,14 @@
+import pandas as pd
 import scipy.stats
 import streamlit as st
 import time
+
+# estas son variables de estado que se conservan cuando Streamlin vuelve a ejecutar este script
+if 'experiment_no' not in st.session_state:
+    st.session_state['experiment_no'] = 0
+
+if 'df_experiment_results' not in st.session_state:
+    st.session_state['df_experiment_results'] = pd.DataFrame(columns=['no', 'iterations', 'media'])
 
 
 st.header("Flip a coin")
@@ -21,7 +29,7 @@ def toss_coin(n): # función que emula el lanzamiento de una moneda
             outcome_1_count += 1
         mean = outcome_1_count / outcome_no
         chart.add_rows([mean])
-        time.sleep(0.05)
+        time.sleep(0.01)
 
     return mean
 
@@ -30,4 +38,16 @@ start_button = st.button('Execute')
 
 if start_button:
     st.write(f'Experiment with {number_of_trials} trials in progress')
+    st.session_state['experiment_no'] += 1
     mean = toss_coin(number_of_trials)
+    st.session_state['df_experiment_results'] = pd.concat([
+        st.session_state['df_experiment_results'],
+        pd.DataFrame(data=[[st.session_state['experiment_no'],
+                            number_of_trials,
+                            mean]],
+                columns=['no', 'iterations', 'media'])
+        ],
+        axis=0)
+    st.session_state['df_experiment_results'] = st.session_state['df_experiment_results'].reset_index(drop=True)
+
+st.write(st.session_state['df_experiment_results'])
